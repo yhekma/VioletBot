@@ -9,7 +9,7 @@ from discord.ext import commands
 
 bot = commands.Bot(command_prefix=";;")
 
-bots = 2
+bots = 1
 players = {}
 queues = {}
 
@@ -41,11 +41,15 @@ async def on_ready():
     print('------')
 
 @bot.command(pass_context=True) 
-async def r(ctx, ruleNumb: int): #R1 command
-    embed=discord.Embed(title="Rule {}".format(ruleNumb), description=linecache.getline("../txt_files/rules.txt", ruleNumb))
-    await bot.say(embed=embed)
-    print("{} used the r{} command in #{}".format(ctx.message.author, ruleNumb, ctx.message.channel))
-    await bot.delete_message(ctx.message)
+async def r(ctx, ruleNumb: int): #Rule command
+    if ruleNumb < 9 and ruleNumb > 0:
+        embed=discord.Embed(title="Rule {}".format(ruleNumb), description=linecache.getline("../txt_files/rules.txt", ruleNumb))
+        await bot.say(embed=embed)
+        print("{} used the r{} command in #{}".format(ctx.message.author, ruleNumb, ctx.message.channel))
+        await bot.delete_message(ctx.message)
+    else:
+        await bot.say("{}, rule {} doesn't exist!".format(ctx.message.author, ruleNumb))
+        print("{} tried to display rule {} in #{}".format(ctx.message.author, ruleNumb, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def naru(ctx): #Naru command
