@@ -7,6 +7,31 @@ import json
 import youtube_dl
 from discord.ext import commands
 
+def warnmember(member, warnmsg):
+    global member_warns
+    with open("../txt_files/warns.json", "r") as f:
+        warns = json.load(f)
+    if not member in warns:
+        warns[member] = {}
+        member_warns = 0
+    if "warn" not in warns[member]:
+        warns[member]["warn"] = warnmsg
+        member_warns = 1
+    elif "warn1" not in warns[member]:
+        warns[member]["warn1"] = warnmsg
+        member_warns = 2
+    elif "warn2" not in warns[member]:
+        warns[member]["warn2"] = warnmsg
+        member_warns = 3
+    elif "warn3" not in warns[member]:
+        warns[member]["warn3"] = warnmsg
+        member_warns = 4
+    elif "warn4" not in warns[member]:
+        warns[member]["warn4"] = warnmsg
+        member_warns = 5
+    with open("../txt_files/warns.json", "w") as f:
+        json.dump(warns, f)
+
 bot = commands.Bot(command_prefix=";;")
 
 bots = 1
@@ -19,6 +44,21 @@ if not os.path.isfile("../txt_files/bot_token.txt"): #Authentication stuff
     token_txt = open(r"../txt_files/bot_token.txt", "a+")
     token_txt.write(token)
     token_txt.close
+
+@bot.command(pass_context=True)
+@commands.has_permissions(ban_members=True)
+async def warn(ctx, member: discord.Member, warnmsg):
+    warnmember(member.id, warnmsg)
+    await bot.say("{}, you've been warned for the reason '{}', this is your {}th warning!".format(member, warnmsg, member_warns))
+    print("{} warned {} for the reason '{}'".format(ctx.message.author, member, warnmsg))
+    #if member_warns == 3:
+    #    bot.kick(member)
+    #    await bot.say("{} got an automated kick.".format(member))
+    #    print("{} got an automated kick.".format(member))
+    #if member_warns == 5:
+    #    bot.ban(member)
+    #    await bot.say("{} got an automated ban.".format(member))
+    #    print("{} got an automated ban".format(member))
 
 @bot.event
 async def on_member_join(member): #Welcome message
