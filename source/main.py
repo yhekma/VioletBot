@@ -51,14 +51,14 @@ async def warn(ctx, member: discord.Member, warnmsg):
     warnmember(member.id, warnmsg)
     await bot.say("{}, you've been warned for the reason '{}', this is your {}th warning!".format(member, warnmsg, member_warns))
     print("{} warned {} for the reason '{}'".format(ctx.message.author, member, warnmsg))
-    #if member_warns == 3:
-    #    bot.kick(member)
-    #    await bot.say("{} got an automated kick.".format(member))
-    #    print("{} got an automated kick.".format(member))
-    #if member_warns == 5:
-    #    bot.ban(member)
-    #    await bot.say("{} got an automated ban.".format(member))
-    #    print("{} got an automated ban".format(member))
+    if member_warns == 3:
+        await bot.kick(member)
+        await bot.say("{} got an automated kick.".format(member))
+        print("{} got an automated kick.".format(member))
+    if member_warns == 5:
+        await bot.ban(member)
+        await bot.say("{} got an automated ban.".format(member))
+        print("{} got an automated ban".format(member))
 
 @bot.event
 async def on_member_join(member): #Welcome message
