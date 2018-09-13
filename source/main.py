@@ -7,17 +7,36 @@ import json
 import youtube_dl
 from discord.ext import commands
 
+def warnmember(member, warnmsg):
+    global member_warns
+    with open("../txt_files/warns.json", "r") as f:
+        warns = json.load(f)
+    if not member in warns:
+        warns[member] = {}
+        member_warns = 0
+    if "warn" not in warns[member]:
+        warns[member]["warn"] = warnmsg
+        member_warns = 1
+    elif "warn1" not in warns[member]:
+        warns[member]["warn1"] = warnmsg
+        member_warns = 2
+    elif "warn2" not in warns[member]:
+        warns[member]["warn2"] = warnmsg
+        member_warns = 3
+    elif "warn3" not in warns[member]:
+        warns[member]["warn3"] = warnmsg
+        member_warns = 4
+    elif "warn4" not in warns[member]:
+        warns[member]["warn4"] = warnmsg
+        member_warns = 5
+    with open("../txt_files/warns.json", "w") as f:
+        json.dump(warns, f)
+
 bot = commands.Bot(command_prefix=";;")
 
-bots = 2
+bots = 1
 players = {}
 queues = {}
-noxp_channels = {
-    "458350360193400832"
-    "458699265426849793"
-    "458699295382831134"
-}
-
 
 if not os.path.isfile("../txt_files/bot_token.txt"): #Authentication stuff
     print("Please insert your bot token")
@@ -26,10 +45,25 @@ if not os.path.isfile("../txt_files/bot_token.txt"): #Authentication stuff
     token_txt.write(token)
     token_txt.close
 
+@bot.command(pass_context=True)
+@commands.has_permissions(ban_members=True)
+async def warn(ctx, member: discord.Member, warnmsg):
+    warnmember(member.id, warnmsg)
+    await bot.say("{}, you've been warned for the reason '{}', this is your {}th warning!".format(member, warnmsg, member_warns))
+    print("{} warned {} for the reason '{}'".format(ctx.message.author, member, warnmsg))
+    if member_warns == 3:
+        await bot.kick(member)
+        await bot.say("{} got an automated kick.".format(member))
+        print("{} got an automated kick.".format(member))
+    if member_warns == 5:
+        await bot.ban(member)
+        await bot.say("{} got an automated ban.".format(member))
+        print("{} got an automated ban".format(member))
+
 @bot.event
 async def on_member_join(member): #Welcome message
     server = member.server
-    fmt = 'Hey {0.mention}, welcome to the {1.name}!\nPlease read the rules and have fun!'
+    fmt = 'Hey {0.mention}, welcome to the {1.name}!\nPlease read the rules and have fun!\nAlso, here, have a cookie! 🍪'
     await bot.send_message(discord.Object(id='458347412910768128'), fmt.format(member, server))
     print(member, "joined the the", server)
     with open("../txt_files/users.json", "r") as f:
@@ -51,72 +85,18 @@ async def on_ready():
     print('------')
 
 @bot.command(pass_context=True) 
-async def r1(ctx): #R1 command
-    """Displays rule 1"""
-    embed=discord.Embed(title="Rule 1", description=linecache.getline("../txt_files/rules.txt", 1))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r1 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r2(ctx): #R2 command
-    """Displays rule 2"""
-    embed=discord.Embed(title="Rule 2", description=linecache.getline("../txt_files/rules.txt", 2))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r2 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r3(ctx): #R3 command
-    """Displays rule 3"""
-    embed=discord.Embed(title="Rule 3", description=linecache.getline("../txt_files/rules.txt", 3))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r3 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r4(ctx): #R4 command
-    """Displays rule 4"""
-    embed=discord.Embed(title="Rule 4", description=linecache.getline("../txt_files/rules.txt", 4))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r4 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r5(ctx): #R5 command
-    """Displays rule 5"""
-    embed=discord.Embed(title="Rule 5", description=linecache.getline("../txt_files/rules.txt", 5))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r5 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r6(ctx): #R6 command
-    """Displays rule 6"""
-    embed=discord.Embed(title="Rule 6", description=linecache.getline("../txt_files/rules.txt", 6))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r6 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r7(ctx): #R7 command
-    """Displays rule 7"""
-    embed=discord.Embed(title="Rule 7", description=linecache.getline("../txt_files/rules.txt", 7))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r7 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
-
-@bot.command(pass_context=True)
-async def r8(ctx): #R8 command
-    """Displays rule 8"""
-    embed=discord.Embed(title="Rule 8", description=linecache.getline("../txt_files/rules.txt", 8))
-    await bot.say(embed=embed)
-    print(ctx.message.author, "used the r8 command in the", ctx.message.channel, "channel")
-    await bot.delete_message(ctx.message)
+async def r(ctx, ruleNumb: int): #Rule command
+    if ruleNumb < 9 and ruleNumb > 0:
+        embed=discord.Embed(title="Rule {}".format(ruleNumb), description=linecache.getline("../txt_files/rules.txt", ruleNumb))
+        await bot.say(embed=embed)
+        print("{} used the r{} command in #{}".format(ctx.message.author, ruleNumb, ctx.message.channel))
+        await bot.delete_message(ctx.message)
+    else:
+        await bot.say("{}, rule {} doesn't exist!".format(ctx.message.author, ruleNumb))
+        print("{} tried to display rule {} in #{}".format(ctx.message.author, ruleNumb, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def naru(ctx): #Naru command
-    """Naru command (for science)"""
     RNG = random.randint(0, 2)
     if RNG == 0:
         await bot.say("Cus itsa  SMALL DICK BOY")
@@ -124,11 +104,10 @@ async def naru(ctx): #Naru command
         await bot.say("The creepy thing?")
     if RNG == 2:
         await bot.say("'I need yvar to wake tf up for this'\nNo you don't. Leave me the fuck alone")
-    print(ctx.message.author, "used the naru command in the", ctx.message.channel, "channel")
+    print("{} used the naru command in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def gny(ctx): #Gny command
-    """Gny command (for science)"""
     RNG = random.randint(0, 2)
     if RNG == 0:
         await bot.say("Ya shaveing smooth and my crack hard to do")
@@ -136,91 +115,136 @@ async def gny(ctx): #Gny command
         await bot.say("Ok hugs mmm u not still u know thinking ur bad right")
     if RNG == 2:
         await bot.say("Clenches butt cheeks so poop doesn't come out")
-    print(ctx.message.author, "used the naru command in the", ctx.message.channel, "channel")
+    print("{} used the gny command in #{}")
 
 @bot.command(pass_context=True)
-async def hug(ctx, user: discord.Member):
-    await bot.say("**hugs{0.mention}**".format(user))
+async def hug(ctx, member: discord.Member=None): #Hug command
+    if member == None:
+        member = ctx.message.author
+    await bot.say("**hugs {}**".format(member.display_name))
     await bot.send_file(ctx.message.channel, "../imgs/hug.gif")
+    print("{} hugged {} in #{}".format(ctx.message.author, member, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def mantis(ctx): #Mantis command
-    """Mantis commmand (for actual science)"""
     RNG = random.randint(1, 19)
     await bot.say(linecache.getline("../txt_files/mantis.txt", RNG))
-    print(ctx.message.author, "used the mantis command in the", ctx.message.channel, "channel")
+    print("{} used the mantis command in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member): #Ban command
-    """Ban a member"""
-    await bot.ban(member)
-    await bot.send_message(ctx.message.channel, "{0.mention} is now banned!".format(member))
-    print(ctx.message.author, "banned", member)
+async def ban(ctx, member: discord.Member=None): #Ban command
+    if ctx.message.author.server_permissions.ban_members:
+        if member != ctx.message.author:
+            await bot.ban(member)
+            await bot.send_message(ctx.message.channel, "{} is now banned!".format(member))
+            print("{} banned {} in #{}".format(ctx.message.author, member, ctx.message.channel))
+        else:
+            await bot.say("Please don't try to ban yourself, {}".format(ctx.message.author.display_name))
+            print("{} tried to ban themselves in #{}".format(ctx.message.author, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried using the ban command without permissions in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(ban_members=True)
-async def kick(ctx, member: discord.Member): #Kick command
-    """Kick a member"""
-    await bot.kick(member)
-    await bot.send_message(ctx.message.channel, "{0.mention} is now kicked!".format(member))
-    print(ctx.message.author, "kick", member)
+async def kick(ctx, member:discord.Member): #Kick command
+    if ctx.message.author.server_permissions.ban_members:
+        if member != ctx.message.author:
+            await bot.kick(member)
+            await bot.send_message(ctx.message.channel, "{} is now kicked!".format(member))
+            print("{} kicked {} in #{}".format(ctx.message.author, member, ctx.message.channel))
+        else:
+            await bot.say("Please don't try to kick yourself, {}".format(ctx.message.author.display_name))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried using the kick command without permissions in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def membercount(ctx): #Membercount command
-    """Displays the total amount of members"""
     totalmembers = ctx.message.server.member_count-bots
-    await bot.say(f"the {ctx.message.server} now has {totalmembers} members!")
-    print(ctx.message.author, "used the membercount command in the", ctx.message.channel, "channel")
+    await bot.say("the {} now has {} members!".format(ctx.message.server, totalmembers))
+    print("{} used the membercount command in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
 async def poll(ctx): #Poll command
     await bot.add_reaction(ctx.message, "👍")
     await bot.add_reaction(ctx.message, "👎")
-    print(ctx.message.author, "used the poll command in the", ctx.message.channel, "channel")
+    print("{} used the poll command in #{}".format(ctx.message.author, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(manage_messages=True)
 async def quote(ctx, msg): #Quote command
-    await bot.say(msg)
-    await bot.delete_message(ctx.message)
-    print(ctx.message.author, "used the quote command in the", ctx.message.channel, "channel")
+    if ctx.message.author.server_permissions.manage_messages:
+        await bot.say(msg)
+        await bot.delete_message(ctx.message)
+        print("{} made the bot say '{}' in #{}".format(ctx.message.author, msg, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried to let the bot say '{}' in #{} without permissions".format(ctx.message.author, msg, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(manage_nicknames=True)
-async def nick(ctx, user: discord.Member, nick):
-    await bot.change_nickname(user, nick)
-    await bot.say("changed nickname to {}!".format(nick))
-    print("{} changed {}'s nickname to {}".format(ctx.message.author, user, nick))
+async def change_playing(ctx, game): #Change_playing command
+    if ctx.message.author.server_permissions.administrator:
+        await bot.change_presence(game=discord.Game(name=game))
+        await bot.say("Changed playing message to '{}'".format(game))
+        print("{} changed the playing message to '{}' in #{}".format(ctx.message.author, game, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried to change the playing message to '{}' in #{} without permissions!".format(ctx.message.author, game, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(manage_nicknames=True)
-async def checkuser(ctx, user: discord.Member):
-    await bot.say("Username: {}\nUser ID: {}\nProfile picture: {}\nUser is a bot: {}\nDisplay name: {}\nDiscord account created at: {}".format(user.name, user.id, user.avatar_url, user.bot, user.display_name, user.created_at))
-    print("{} used the checkuser command on {}".format(ctx.message.author, user))
+async def nick(ctx, member: discord.Member, nick): #Nick command
+    if ctx.message.author.server_permissions.manage_nicknames:
+        await bot.change_nickname(member, nick)
+        await bot.say("changed nickname to {}!".format(nick))
+        print("{} changed {}'s nickname to {} in #{}".format(ctx.message.author, member, nick, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried changing {}'s nickname to {} in #{} without permissions!".format(ctx.message.author, member, nick, ctx.message.channel))
 
 @bot.command(pass_context=True)
-@commands.has_permissions(manage_nicknames=True)
-async def clearnick(ctx, user: discord.Member):
-    await bot.change_nickname(user, "")
-    await bot.say("cleared {}'s nickname!".format(user))
-    print("{} cleared {}'s nickname".format(ctx.message.author, user))
+async def checkuser(ctx, member: discord.Member=None): #Checkuser command
+    if member == None:
+        member = ctx.message.author
+    if ctx.message.author.server_permissions.manage_nicknames and member != ctx.message.author:
+        await bot.say("Username: {}\nUser ID: {}\nProfile picture: {}\nUser is a bot: {}\nDisplay name: {}\nDiscord account created at: {}".format(member.name, member.id, member.avatar_url, member.bot, member.display_name, member.created_at))
+        print("{} used the checkuser command on {} in #{}".format(ctx.message.author, member, ctx.message.channel))
+    elif member == ctx.message.author:
+        await bot.say("Username: {}\nUser ID: {}\nProfile picture: {}\nUser is a bot: {}\nDisplay name: {}\nDiscord account created at: {}".format(member.name, member.id, member.avatar_url, member.bot, member.display_name, member.created_at))
+        print("{} used the checkuser command on themselves in #{}".format(ctx.message.author, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried checkuser on {} in #{} without permissions".format(ctx.message.author, member, ctx.message.channel))
+
+@bot.command(pass_context=True)
+async def clearnick(ctx, member: discord.Member=None): #Clearnick command
+    if ctx.message.author.server_permissions.manage_nicknames:
+        if member == None:
+            member = ctx.message.author
+        await bot.change_nickname(member, "")
+        await bot.say("cleared {}'s nickname!".format(member))
+        print("{} cleared {}'s nickname in #{}".format(ctx.message.author, member, ctx.message.channel))
+
+@bot.command(pass_context=True)
+async def takevent(ctx, member: discord.Member): #Takevent command
+    if ctx.message.author.server_permissions.manage_channels:
+        role = discord.utils.get(ctx.message.author.server.roles, name="no-vent")
+        await bot.add_roles(member, role)
+        await bot.say("{0.mention} cannot message in the vent channel anymore.".format(member))
+        print("{} took vent acces from {} in #{}".format(ctx.message.author, member, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried to use the takevent command on {} in #{}".format(ctx.message.author, member, ctx.message.channel))
 
 @bot.command(pass_context=True)
 @commands.has_permissions(manage_channels=True)
-async def takevent(ctx, user: discord.Member): #Takevent command
-    role = discord.utils.get(ctx.message.author.server.roles, name="no-vent")
-    await bot.add_roles(user, role)
-    await bot.say("{0.mention} cannot message in the vent channel anymore.".format(user))
-    print(ctx.message.author, "took vent acces from", user)
-
-@bot.command(pass_context=True)
-@commands.has_permissions(manage_channels=True)
-async def givevent(ctx, user: discord.Member): #Givevent command
-    role = discord.utils.get(ctx.message.author.server.roles, name="no-vent")
-    await bot.remove_roles(user, role)
-    await bot.say("{0.mention} can now message in the vent channel again.".format(user))
-    print(ctx.message.author, "gave vent acces back to", user)
+async def givevent(ctx, member: discord.Member): #Givevent command
+    if ctx.message.author.server_permissions.manage_channels:
+        role = discord.utils.get(ctx.message.author.server.roles, name="no-vent")
+        await bot.remove_roles(member, role)
+        await bot.say("{0.mention} can now message in the vent channel again.".format(member))
+        print("{} gave vent acces back to {} in #{}".format(ctx.message.author, member, ctx.message.channel))
+    else:
+        await bot.say("You don't have permissions to use this command!")
+        print("{} tried to use the givevent command on {} in #{}".format(ctx.message.author, member, ctx.message.channel))
 
 @bot.event
 async def on_message(message):
@@ -261,7 +285,7 @@ async def join(ctx): #Join command
     channel = ctx.message.author.voice.voice_channel
     await bot.join_voice_channel(channel)
     await bot.say("Joined the {} channel".format(channel))
-    print(ctx.message.author, "used the join command in the", ctx.message.channel, "channel")
+    print("{} used the join command in #{} to make the bot join {}".format(ctx.message.author, ctx.message.channel, channel))
 
 @bot.command(pass_context=True)
 async def leave(ctx): #Leave command
@@ -270,33 +294,39 @@ async def leave(ctx): #Leave command
     voice_client = bot.voice_client_in(server)
     await voice_client.disconnect()
     await bot.say("left the {} channel".format(channel))
-    print(ctx.message.author, "used the leave command in the", ctx.message.channel, "channel")
+    print("{} used the leave command in #{} to make the bot leave {}".format(ctx.message.author, ctx.message.channel, channel))
 
 @bot.command(pass_context=True)
 async def play(ctx, url): #Play command
     server = ctx.message.server
+    channel = ctx.message.author.voice.voice_channel
     voice_client = bot.voice_client_in(server)
     player = await voice_client.create_ytdl_player(url, after=lambda: check_queue(server.id))
     players[server.id] = player
     player.start()
-    bot.say("Now playing the song.")
-    print(ctx.message.author, "is now playing a song in", ctx.message.author.voice.voice_channel, "in the", ctx.message.server)
+    bot.say("Now playing a song in {}".format(channel))
+    print("{} used the play command in #{} to play a song in {}".format(ctx.message.author, ctx.message.channel, channel))
 
 @bot.command(pass_context=True)
 async def pause(ctx): #Pause command
     id = ctx.message.server.id
+    channel = ctx.message.author.voice.voice_channel
     players[id].pause()
-    await bot.say("Paused the music")
+    await bot.say("Paused the music playing in {}".format(channel))
+    print("{} used the pause command in #{} to pause the music in {}".format(ctx.message.author, ctx.message.channel, channel))
 
 @bot.command(pass_context=True)
 async def resume(ctx): #Resume command
     id = ctx.message.server.id
+    channel = ctx.message.author.voice.voice_channel
     players[id].resume()
-    await bot.say("Resumed the music")
+    await bot.say("Resumed the music playing in {}".format(channel))
+    print("{} used the resume command in #{} to resume the music in {}".format(ctx.message.author, ctx.message.channel, channel))
 
 @bot.command(pass_context=True)
 async def queue(ctx, url): #Queue command
     server = ctx.message.server
+    channel = ctx.message.author.voice.voice_channel
     voice_client = bot.voice_client_in(server)
     player = await voice_client.create_ytdl_player(url, after=lambda: check_queue(server.id))
     if server.id in queues:
@@ -304,11 +334,7 @@ async def queue(ctx, url): #Queue command
     else:
         queues[server.id] = [player]
     await bot.say("Song queued.")
-    print(ctx.message.author, "is now playing a song in", ctx.message.author.voice.voice_channel, "in the", ctx.message.server)
-
-@bot.command(pass_context=True)
-async def skip(ctx):
-    print()
+    print("{} used the queue command in #{} to queue a song to play in {}".format(ctx.message.author, ctx.message.channel, channel))
 
 token_txt = open(r"../txt_files/bot_token.txt", "r")
 token = token_txt.read()
