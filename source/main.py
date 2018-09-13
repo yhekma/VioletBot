@@ -38,6 +38,10 @@ async def on_member_join(member): #Welcome message
     with open("../txt_files/users.json", "w") as f:
         json.dump(users, f)
 
+@bot.event
+async def on_member_remove(member):
+    print("{} left the {}".format(member, member.server))
+
 @bot.event #Startup message for host
 async def on_ready():
     await bot.change_presence(game=discord.Game(name="with Yvar's sanity"))
