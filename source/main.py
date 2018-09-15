@@ -7,30 +7,6 @@ import json
 import youtube_dl
 from discord.ext import commands
 
-def warnmember(member, warnmsg):
-    global member_warns
-    with open("../txt_files/warns.json", "r") as f:
-        warns = json.load(f)
-    if not member in warns:
-        warns[member] = {}
-        member_warns = 0
-    if "warn" not in warns[member]:
-        warns[member]["warn"] = warnmsg
-        member_warns = 1
-    elif "warn1" not in warns[member]:
-        warns[member]["warn1"] = warnmsg
-        member_warns = 2
-    elif "warn2" not in warns[member]:
-        warns[member]["warn2"] = warnmsg
-        member_warns = 3
-    elif "warn3" not in warns[member]:
-        warns[member]["warn3"] = warnmsg
-        member_warns = 4
-    elif "warn4" not in warns[member]:
-        warns[member]["warn4"] = warnmsg
-        member_warns = 5
-    with open("../txt_files/warns.json", "w") as f:
-        json.dump(warns, f)
 
 bot = commands.Bot(command_prefix=";;")
 
@@ -49,7 +25,11 @@ if not os.path.isfile("../txt_files/bot_token.txt"): #Authentication stuff
 @commands.has_permissions(ban_members=True)
 async def warn(ctx, member: discord.Member, warnmsg):
     warnmember(member.id, warnmsg)
-    await bot.say("{}, you've been warned for the reason '{}', this is your {}th warning!".format(member, warnmsg, member_warns))
+    try:
+        member_data[member.id].append({'warn': warnmsg})
+    except KeyError:
+        member_data[member.id] = {'warn': warnmsg}
+    await bot.say("{}, you've been warned for the reason '{}', this is your {}th warning!".format(member, warnmsg, len(member_data[member.id]))
     print("{} warned {} for the reason '{}'".format(ctx.message.author, member, warnmsg))
     if member_warns == 3:
         await bot.kick(member)
@@ -329,14 +309,16 @@ async def queue(ctx, url): #Queue command
     channel = ctx.message.author.voice.voice_channel
     voice_client = bot.voice_client_in(server)
     player = await voice_client.create_ytdl_player(url, after=lambda: check_queue(server.id))
-    if server.id in queues:
+    try:
         queues[server.id].append(player)
-    else:
+    except KeyError:
         queues[server.id] = [player]
     await bot.say("Song queued.")
     print("{} used the queue command in #{} to queue a song to play in {}".format(ctx.message.author, ctx.message.channel, channel))
 
 token_txt = open(r"../txt_files/bot_token.txt", "r")
+with open("../txt_files/warns.json", "r") as f:
+    member_data = json.load(f)
 token = token_txt.read()
 bot.run(token)
 token_txt.close
